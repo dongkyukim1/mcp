@@ -1,0 +1,40 @@
+{
+  "name": "mcp-server",
+  "version": "1.0.0",
+  "description": "Management Control Panel - 노션, 깃허브, 팀즈, 아웃룩 통합 대시보드",
+  "main": "server/src/index.js",
+  "scripts": {
+    "start": "node server/src/index.js",
+    "server": "node server/src/index.js",
+    "client": "cd client && npm start",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "keywords": [
+    "notion",
+    "github",
+    "teams",
+    "outlook",
+    "management"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@azure/msal-node": "^3.4.1",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
+    "@notionhq/client": "^2.2.14",
+    "@slack/web-api": "^7.9.1",
+    "axios": "^1.8.4",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "googleapis": "^148.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.1"
+  }
+}
