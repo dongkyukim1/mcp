@@ -130,6 +130,70 @@ app.use((err, req, res, next) => {
   });
 });
 
+// 설정 API 엔드포인트
+app.post('/api/settings', (req, res) => {
+  try {
+    const { theme, notifications, dashboard, services } = req.body;
+    
+    // 설정 저장 처리 (실제로는 데이터베이스에 저장)
+    // 여기서는 간단히 콘솔에 로그만 출력
+    console.log('사용자 설정 저장 요청:', {
+      theme,
+      notifications,
+      dashboard,
+      services
+    });
+    
+    // 성공 응답
+    res.json({ 
+      success: true, 
+      message: '설정이 성공적으로 저장되었습니다.',
+      savedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('설정 저장 오류:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: '설정을 저장하는 중 오류가 발생했습니다.' 
+    });
+  }
+});
+
+app.get('/api/settings', (req, res) => {
+  try {
+    // 실제로는 데이터베이스나 사용자 세션에서 설정을 가져와야 함
+    // 여기서는 더미 데이터 반환
+    res.json({
+      theme: 'light',
+      notifications: {
+        pushEnabled: true,
+        emailEnabled: false,
+        frequency: 'realtime'
+      },
+      dashboard: {
+        showRecentActivities: true,
+        autoRefresh: false,
+        layout: 'grid'
+      },
+      services: [
+        { id: 'notion', enabled: true, connected: true },
+        { id: 'github', enabled: true, connected: true },
+        { id: 'gmail', enabled: true, connected: true },
+        { id: 'drive', enabled: true, connected: true },
+        { id: 'sheets', enabled: true, connected: true },
+        { id: 'slack', enabled: false, connected: false },
+        { id: 'discord', enabled: false, connected: false }
+      ]
+    });
+  } catch (error) {
+    console.error('설정 조회 오류:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: '설정을 조회하는 중 오류가 발생했습니다.' 
+    });
+  }
+});
+
 // 서버 시작
 app.listen(PORT, () => {
   console.log(`서버가 포트 ${PORT}에서 실행 중입니다.`);

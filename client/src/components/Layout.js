@@ -21,7 +21,9 @@ import {
   Badge,
   InputBase,
   Paper,
-  alpha
+  alpha,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -38,7 +40,8 @@ import {
   Folder as FolderIcon,
   TableChart as TableChartIcon,
   Chat as ChatIcon,
-  Headset as HeadsetIcon
+  Headset as HeadsetIcon,
+  AccountCircle as AccountCircleIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -67,6 +70,34 @@ const Layout = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuItems, setMenuItems] = useState(menuItemsConfig);
   const [totalNotifications, setTotalNotifications] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  // 사용자 메뉴 상태 추가
+  const [anchorEl, setAnchorEl] = useState(null);
+  const isMenuOpen = Boolean(anchorEl);
+
+  // 사용자 메뉴 열기 핸들러
+  const handleProfileMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  // 사용자 메뉴 닫기 핸들러
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  // 설정 페이지로 이동
+  const handleOpenSettings = () => {
+    handleMenuClose();
+    navigate('/settings');
+  };
+
+  // 로그아웃 핸들러
+  const handleLogout = () => {
+    handleMenuClose();
+    // 로그아웃 로직 구현
+    alert('로그아웃 기능은 아직 구현되지 않았습니다.');
+  };
 
   // 알림 카운트 가져오기
   useEffect(() => {
@@ -287,6 +318,7 @@ const Layout = ({ children }) => {
       <List sx={{ px: 2, mt: 'auto' }}>
         <ListItem disablePadding sx={{ mb: 0.5 }}>
           <ListItemButton
+            onClick={() => navigate('/settings')}
             sx={{
               borderRadius: `${theme.shape.borderRadius}px`,
               py: 1.2,
@@ -323,6 +355,36 @@ const Layout = ({ children }) => {
         </Box>
       </Box>
     </Box>
+  );
+
+  // 사용자 메뉴 렌더링
+  const renderUserMenu = (
+    <Menu
+      anchorEl={anchorEl}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'right',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+      open={isMenuOpen}
+      onClose={handleMenuClose}
+    >
+      <MenuItem onClick={handleOpenSettings}>
+        <ListItemIcon>
+          <SettingsIcon fontSize="small" />
+        </ListItemIcon>
+        설정
+      </MenuItem>
+      <MenuItem onClick={handleLogout}>
+        <ListItemIcon>
+          <LogoutIcon fontSize="small" />
+        </ListItemIcon>
+        로그아웃
+      </MenuItem>
+    </Menu>
   );
 
   return (
@@ -364,39 +426,45 @@ const Layout = ({ children }) => {
           </Box>
           
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            {/* 알림 아이콘 */}
             <Tooltip title="알림">
-              <IconButton size="large" color="inherit">
-                <Badge badgeContent={totalNotifications > 0 ? totalNotifications : null} color="error">
+              <IconButton color="inherit">
+                <Badge badgeContent={totalNotifications} color="error">
                   <NotificationsIcon />
                 </Badge>
               </IconButton>
             </Tooltip>
             
-            <Tooltip title="프로필">
-              <IconButton 
-                size="large" 
-                sx={{ 
-                  ml: 1,
-                  border: `1px solid ${theme.palette.divider}`,
-                  borderRadius: '12px',
-                  padding: '8px',
-                }}
+            {/* 설정 버튼 */}
+            <Tooltip title="설정">
+              <IconButton
+                color="inherit"
+                onClick={() => navigate('/settings')}
+                sx={{ mx: 1 }}
               >
-                <Avatar
-                  sx={{ 
-                    width: 30, 
-                    height: 30, 
-                    bgcolor: theme.palette.primary.main,
-                    fontSize: '0.9rem', 
-                  }}
-                >
-                  U
-                </Avatar>
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
+            
+            {/* 사용자 아이콘 */}
+            <Tooltip title="내 프로필">
+              <IconButton
+                edge="end"
+                aria-label="사용자 계정"
+                aria-controls="user-menu"
+                aria-haspopup="true"
+                onClick={handleProfileMenuOpen}
+                color="inherit"
+              >
+                <AccountCircleIcon />
               </IconButton>
             </Tooltip>
           </Box>
         </Toolbar>
       </AppBar>
+      
+      {/* 사용자 메뉴 */}
+      {renderUserMenu}
       
       <Box
         component="nav"
