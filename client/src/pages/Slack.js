@@ -6,14 +6,10 @@ import {
   Card, 
   CardContent, 
   Button, 
-  Grid, 
-  Divider, 
   List, 
   ListItem, 
-  ListItemIcon, 
   ListItemText, 
   ListItemAvatar,
-  Paper, 
   CircularProgress, 
   Avatar, 
   Tooltip,
@@ -34,12 +30,9 @@ import {
   PersonAdd as PersonAddIcon,
   Search as SearchIcon,
   InsertDriveFile as FileIcon,
-  Image as ImageIcon,
   EmojiEmotions as EmojiIcon,
-  MoreVert as MoreIcon,
   Add as AddIcon
 } from '@mui/icons-material';
-import axios from 'axios';
 
 // 테스트 채널 데이터
 const mockChannels = [

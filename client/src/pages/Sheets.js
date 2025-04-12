@@ -7,11 +7,6 @@ import {
   CardContent, 
   Button, 
   Grid, 
-  Divider, 
-  List, 
-  ListItem, 
-  ListItemIcon, 
-  ListItemText, 
   Paper, 
   CircularProgress, 
   Avatar, 
@@ -38,7 +33,6 @@ import {
   StarBorder as StarBorderIcon,
   Share as ShareIcon,
 } from '@mui/icons-material';
-import axios from 'axios';
 
 // 테스트 시트 데이터
 const mockSheets = [

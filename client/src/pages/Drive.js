@@ -52,62 +52,6 @@ const getFileIcon = (fileType) => {
   }
 };
 
-// 테스트 파일 데이터
-const mockFiles = [
-  { 
-    id: '1', 
-    name: '회의록.docx', 
-    type: 'document', 
-    size: '512KB', 
-    modified: '2023-05-10', 
-    owner: 'me', 
-    shared: false 
-  },
-  { 
-    id: '2', 
-    name: '프로젝트 계획서.pdf', 
-    type: 'pdf', 
-    size: '1.2MB', 
-    modified: '2023-05-12', 
-    owner: 'me', 
-    shared: true 
-  },
-  { 
-    id: '3', 
-    name: '프레젠테이션.pptx', 
-    type: 'document', 
-    size: '3.5MB', 
-    modified: '2023-05-15', 
-    owner: 'me', 
-    shared: false 
-  },
-  { 
-    id: '4', 
-    name: '디자인 에셋', 
-    type: 'folder', 
-    items: 12, 
-    modified: '2023-05-08', 
-    owner: 'me', 
-    shared: true 
-  },
-  { 
-    id: '5', 
-    name: '제품 사진.jpg', 
-    type: 'image', 
-    size: '2.4MB', 
-    modified: '2023-05-20', 
-    owner: 'me', 
-    shared: false 
-  }
-];
-
-// 테스트 폴더 데이터
-const mockFolders = [
-  { id: '1', name: '프로젝트', items: 8, modified: '2023-05-18', shared: true },
-  { id: '2', name: '문서', items: 15, modified: '2023-05-15', shared: false },
-  { id: '3', name: '이미지', items: 32, modified: '2023-05-10', shared: false }
-];
-
 const Drive = () => {
   const theme = useTheme();
   const [files, setFiles] = useState([]);
@@ -118,106 +62,110 @@ const Drive = () => {
 
   // 드라이브 데이터 로드
   useEffect(() => {
-    const loadDriveData = async () => {
-      setLoading(true);
+    // URL 파라미터 확인 (인증 콜백 처리)
+    const searchParams = new URLSearchParams(window.location.search);
+    const authStatus = searchParams.get('auth');
+    
+    if (authStatus) {
+      console.log("인증 파라미터 감지, URL 정리");
+      window.history.replaceState({}, document.title, '/drive');
+      
+      if (authStatus === 'error') {
+        setError("Google Drive 인증에 실패했습니다.");
+      }
+    }
+    
+    // 로딩 상태 설정
+    setLoading(true);
+    
+    // 인증 상태 확인
+    const checkAuthStatus = async () => {
       try {
-        // 인증 상태 확인
-        const statusRes = await axios.get('/api/drive/auth-status');
+        console.log("드라이브 인증 상태 확인 중...");
+        const response = await axios.get('/api/drive/auth-status');
+        console.log("드라이브 인증 상태:", response.data);
         
-        if (statusRes.data.isAuthenticated) {
-          // 파일 및 폴더 목록 가져오기
-          const [filesRes, foldersRes] = await Promise.all([
-            axios.get('/api/drive/files'),
-            axios.get('/api/drive/folders')
-          ]);
-          
-          setFiles(filesRes.data);
-          setFolders(foldersRes.data);
-          setConnected(true);
-        } else {
-          setConnected(false);
-          if (statusRes.data.reason === 'token_expired') {
-            setError('Google Drive 토큰이 만료되었습니다. 다시 연결해주세요.');
+        if (response.data.isAuthenticated) {
+          // 인증된 경우 실제 데이터 로드
+          try {
+            console.log("드라이브 파일/폴더 데이터 로드 중...");
+            const [filesRes, foldersRes] = await Promise.all([
+              axios.get('/api/drive/files'),
+              axios.get('/api/drive/folders')
+            ]);
+            
+            setFiles(filesRes.data);
+            setFolders(foldersRes.data);
+            setConnected(true);
+            setError(null);
+          } catch (dataErr) {
+            console.error("드라이브 데이터 로드 오류:", dataErr);
+            setError("드라이브 데이터를 불러오는 중 오류가 발생했습니다.");
+            setFiles([]);
+            setFolders([]);
           }
+        } else {
+          // 인증되지 않은 경우
+          setConnected(false);
+          setFiles([]);
+          setFolders([]);
         }
       } catch (err) {
-        console.error('드라이브 데이터 로드 오류:', err);
-        setError('드라이브 데이터를 불러오는 중 오류가 발생했습니다.');
+        console.error("드라이브 인증 상태 확인 오류:", err);
+        setConnected(false);
+        setError("드라이브 연결 상태 확인 중 오류가 발생했습니다.");
+        setFiles([]);
+        setFolders([]);
       } finally {
         setLoading(false);
       }
     };
-
-    // 연결된 상태일 때만 데이터 로드
-    if (connected) {
-      loadDriveData();
-    }
-  }, [connected]);
+    
+    // 인증 상태 확인 실행 (단 한 번만)
+    checkAuthStatus();
+  }, []); // 빈 의존성 배열 - 마운트 시 한 번만 실행
 
   // 드라이브 연결 핸들러
-  const handleConnect = async () => {
+  const handleConnect = () => {
+    console.log("Google Drive 인증 페이지로 이동");
+    window.location.href = '/api/drive/auth';
+  };
+
+  // 새로고침 핸들러
+  const handleRefresh = async () => {
+    console.log("드라이브 데이터 새로고침");
     setLoading(true);
+    
     try {
-      // API 인증 URL 가져오기
-      const response = await axios.get('/api/drive/auth');
+      const [filesRes, foldersRes] = await Promise.all([
+        axios.get('/api/drive/files'),
+        axios.get('/api/drive/folders')
+      ]);
       
-      if (response.data && response.data.authUrl) {
-        // 인증 URL로 사용자 리디렉션
-        window.location.href = response.data.authUrl;
-      } else {
-        throw new Error('인증 URL을 가져오는데 실패했습니다.');
-      }
+      setFiles(filesRes.data);
+      setFolders(foldersRes.data);
+      setError(null);
     } catch (err) {
-      console.error('드라이브 연결 오류:', err);
-      setError('Google Drive 연결 중 오류가 발생했습니다.');
+      console.error("새로고침 오류:", err);
+      setError("데이터 새로고침 중 오류가 발생했습니다.");
+    } finally {
       setLoading(false);
     }
   };
 
-  // URL 파라미터 체크 (인증 콜백 처리)
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const authStatus = searchParams.get('auth');
-    
-    if (authStatus === 'success') {
-      // 인증 성공 시 상태 업데이트 및 URL 파라미터 제거
-      setConnected(true);
-      window.history.replaceState({}, document.title, '/drive');
-      
-      // loadDriveData 함수를 직접 호출하지 않고, connected 상태만 업데이트
-      // useEffect의 의존성 배열에 connected가 있으므로 loadDriveData가 자동으로 실행됨
-    } else if (authStatus === 'error') {
-      setError('Google Drive 인증에 실패했습니다. 다시 시도해주세요.');
-      window.history.replaceState({}, document.title, '/drive');
-    }
-  }, []);
-
-  // 새로고침 핸들러
-  const handleRefresh = async () => {
-    setLoading(true);
+  // 파일 클릭 핸들러 추가
+  const handleFileClick = async (fileId) => {
     try {
-      // 인증 상태 확인
-      const statusRes = await axios.get('/api/drive/auth-status');
+      console.log(`파일 열기 요청: ${fileId}`);
+      const response = await axios.get(`/api/drive/files/${fileId}/view`);
       
-      if (statusRes.data.isAuthenticated) {
-        // 파일 및 폴더 목록 새로 가져오기
-        const [filesRes, foldersRes] = await Promise.all([
-          axios.get('/api/drive/files'),
-          axios.get('/api/drive/folders')
-        ]);
-        
-        setFiles(filesRes.data);
-        setFolders(foldersRes.data);
-        setError(null); // 이전 오류 메시지 제거
-      } else {
-        setConnected(false);
-        setError('Google Drive에 연결되어 있지 않습니다. 다시 연결해주세요.');
+      if (response.data.viewUrl) {
+        // 새 탭에서 파일 열기
+        window.open(response.data.viewUrl, '_blank');
       }
     } catch (err) {
-      console.error('드라이브 데이터 새로고침 오류:', err);
-      setError('드라이브 데이터를 새로고침하는 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
+      console.error('파일 열기 오류:', err);
+      setError('파일을 여는 중 오류가 발생했습니다');
     }
   };
 
@@ -330,7 +278,7 @@ const Drive = () => {
           <List sx={{ width: '100%' }}>
             {files.map((file, index) => (
               <React.Fragment key={file.id}>
-                <ListItem button>
+                <ListItem button onClick={() => handleFileClick(file.id)}>
                   <ListItemIcon>
                     <Avatar sx={{ bgcolor: file.type === 'folder' ? theme.palette.primary.light : theme.palette.secondary.light }}>
                       {file.type === 'folder' ? <FolderIcon /> : getFileIcon(file.type)}

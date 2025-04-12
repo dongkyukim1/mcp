@@ -14,7 +14,9 @@ import Drive from './pages/Drive';
 import Sheets from './pages/Sheets';
 import Slack from './pages/Slack';
 import Discord from './pages/Discord';
+import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
+import SettingsProvider from './contexts/SettingsContext';
 
 // 테마 설정
 const theme = createTheme({
@@ -199,25 +201,28 @@ const theme = createTheme({
 
 const App = () => {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/gmail" element={<Gmail />} />
-            <Route path="/github" element={<GitHub />} />
-            <Route path="/notion" element={<Notion />} />
-            <Route path="/figma" element={<Figma />} />
-            <Route path="/drive" element={<Drive />} />
-            <Route path="/sheets" element={<Sheets />} />
-            <Route path="/slack" element={<Slack />} />
-            <Route path="/discord" element={<Discord />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
-      </Router>
-    </ThemeProvider>
+    <SettingsProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Router>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/gmail" element={<Gmail />} />
+              <Route path="/github" element={<GitHub />} />
+              <Route path="/notion" element={<Notion />} />
+              <Route path="/figma" element={<Figma />} />
+              <Route path="/drive" element={<Drive />} />
+              <Route path="/sheets" element={<Sheets />} />
+              <Route path="/slack" element={<Slack />} />
+              <Route path="/discord" element={<Discord />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Layout>
+        </Router>
+      </ThemeProvider>
+    </SettingsProvider>
   );
 };
 

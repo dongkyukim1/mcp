@@ -104,34 +104,6 @@ const servicesList = [
   }
 ];
 
-// 최근 활동 더미 데이터
-const recentActivities = [
-  {
-    id: 1,
-    service: 'GitHub',
-    message: '새로운 Pull Request가 생성되었습니다',
-    time: '10분 전',
-    icon: <GitHubIcon />,
-    color: '#171515'
-  },
-  {
-    id: 2,
-    service: 'Gmail',
-    message: '3개의 새 이메일이 도착했습니다',
-    time: '30분 전',
-    icon: <GmailIcon />,
-    color: '#D44638'
-  },
-  {
-    id: 3,
-    service: 'Notion',
-    message: '문서가 업데이트되었습니다',
-    time: '1시간 전',
-    icon: <NotionIcon />,
-    color: '#000000'
-  }
-];
-
 function Dashboard() {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -139,6 +111,8 @@ function Dashboard() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(true);
 
   // 서비스 연결 상태 로드
   const loadServices = async () => {
@@ -208,11 +182,99 @@ function Dashboard() {
       setLoading(false);
       setRefreshing(false);
       
+      // 서비스 상태 로드 후 알림도 로드
+      loadNotifications();
     } catch (err) {
       console.error('서비스 상태 로드 중 오류 발생:', err);
       setError('서비스 연결 상태를 확인하는 중 문제가 발생했습니다.');
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  // 서비스 알림 로드 함수 추가
+  const loadNotifications = async () => {
+    setLoadingNotifications(true);
+    
+    try {
+      // 연결된 서비스만 필터링
+      const connectedServices = services.filter(service => service.connected);
+      
+      // 알림 배열 초기화
+      let allNotifications = [];
+      
+      // 각 서비스별 알림 데이터 요청
+      for (const service of connectedServices) {
+        try {
+          // 서비스별 알림 API 호출
+          const notifEndpoint = `/${service.id}/notifications/count`;
+          console.log(`${service.name} 알림 요청 중... (${notifEndpoint})`);
+          
+          const response = await axios.get(notifEndpoint, { timeout: 5000 });
+          console.log(`${service.name} 알림 응답:`, response.data);
+          
+          // 알림 카운트가 있는 경우
+          if (response.data.count > 0) {
+            allNotifications.push({
+              id: `${service.id}-${Date.now()}`,
+              service: service.name,
+              message: `${response.data.count}개의 새 알림이 있습니다`,
+              time: '방금 전',
+              icon: service.icon,
+              color: service.color
+            });
+          }
+        } catch (err) {
+          console.error(`${service.name} 알림 로드 오류:`, err);
+          // 오류 발생 시 해당 서비스 알림은 건너뜀
+        }
+      }
+      
+      // 알림이 없을 경우 개발 환경에서는 테스트 데이터 생성
+      if (allNotifications.length === 0 && process.env.NODE_ENV === 'development') {
+        const githubService = services.find(s => s.id === 'github');
+        const gmailService = services.find(s => s.id === 'gmail');
+        const notionService = services.find(s => s.id === 'notion');
+        
+        if (githubService?.connected) {
+          allNotifications.push({
+            id: 'github-test',
+            service: '깃허브',
+            message: '새로운 Pull Request가 생성되었습니다',
+            time: '10분 전',
+            icon: <GitHubIcon />,
+            color: '#171515'
+          });
+        }
+        
+        if (gmailService?.connected) {
+          allNotifications.push({
+            id: 'gmail-test',
+            service: 'Gmail',
+            message: '3개의 새 이메일이 도착했습니다',
+            time: '30분 전',
+            icon: <GmailIcon />,
+            color: '#D44638'
+          });
+        }
+        
+        if (notionService?.connected) {
+          allNotifications.push({
+            id: 'notion-test',
+            service: '노션',
+            message: '문서가 업데이트되었습니다',
+            time: '1시간 전',
+            icon: <NotionIcon />,
+            color: '#000000'
+          });
+        }
+      }
+      
+      setNotifications(allNotifications);
+      setLoadingNotifications(false);
+    } catch (err) {
+      console.error('알림 데이터 로드 중 오류:', err);
+      setLoadingNotifications(false);
     }
   };
 
@@ -223,6 +285,7 @@ function Dashboard() {
 
   const handleRefresh = () => {
     loadServices();
+    loadNotifications();
   };
 
   const handleServiceClick = (route) => {
@@ -316,8 +379,9 @@ function Dashboard() {
         <Typography variant="h6">알림 요약</Typography>
         <Button 
           size="small" 
-          startIcon={<SyncIcon />}
-          onClick={handleRefresh}
+          startIcon={loadingNotifications ? <CircularProgress size={16} /> : <SyncIcon />}
+          onClick={loadNotifications}
+          disabled={loadingNotifications}
         >
           동기화
         </Button>
@@ -325,24 +389,14 @@ function Dashboard() {
 
       <Paper sx={{ mb: 4 }}>
         <List>
-          {recentActivities.length > 0 ? (
-            recentActivities.map((activity, index) => (
-              <React.Fragment key={activity.id}>
-                <ListItem button>
-                  <ListItemIcon>
-                    <Avatar sx={{ bgcolor: activity.color }}>
-                      {activity.icon}
-                    </Avatar>
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary={activity.message} 
-                    secondary={`${activity.service} • ${activity.time}`}
-                  />
-                </ListItem>
-                {index < recentActivities.length - 1 && <Divider />}
-              </React.Fragment>
-            ))
-          ) : (
+          {loadingNotifications ? (
+            <ListItem>
+              <ListItemIcon>
+                <CircularProgress size={24} />
+              </ListItemIcon>
+              <ListItemText primary="알림을 불러오는 중..." />
+            </ListItem>
+          ) : notifications.length === 0 ? (
             <ListItem>
               <ListItemIcon>
                 <NotificationIcon color="disabled" />
@@ -352,6 +406,23 @@ function Dashboard() {
                 secondary="연결된 모든 서비스가 최신 상태입니다."
               />
             </ListItem>
+          ) : (
+            notifications.map((notification, index) => (
+              <React.Fragment key={notification.id}>
+                <ListItem button>
+                  <ListItemIcon>
+                    <Avatar sx={{ bgcolor: notification.color }}>
+                      {notification.icon}
+                    </Avatar>
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary={notification.message}
+                    secondary={`${notification.service} • ${notification.time}`}
+                  />
+                </ListItem>
+                {index < notifications.length - 1 && <Divider />}
+              </React.Fragment>
+            ))
           )}
         </List>
       </Paper>
