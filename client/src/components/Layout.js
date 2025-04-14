@@ -42,23 +42,93 @@ import {
   Chat as ChatIcon,
   Headset as HeadsetIcon,
   AccountCircle as AccountCircleIcon,
+  ColorLens as ColorLensIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
 
 // 사이드바 너비
 const drawerWidth = 250;
 
-// 기본 사이드바 메뉴 구조
-const menuItemsConfig = [
-  { id: 'dashboard', text: '대시보드', icon: <DashboardIcon />, path: '/' },
-  { id: 'gmail', text: 'Gmail', icon: <GmailIcon />, path: '/gmail', notificationEndpoint: '/gmail/notifications/count' },
-  { id: 'github', text: 'GitHub', icon: <GitHubIcon />, path: '/github', notificationEndpoint: '/github/notifications/count' },
-  { id: 'notion', text: '노션', icon: <NotionIcon />, path: '/notion', notificationEndpoint: '/notion/notifications/count' },
-  { id: 'drive', text: '드라이브', icon: <FolderIcon />, path: '/drive', notificationEndpoint: '/drive/notifications/count' },
-  { id: 'sheets', text: '시트', icon: <TableChartIcon />, path: '/sheets', notificationEndpoint: '/sheets/notifications/count' },
-  { id: 'slack', text: '슬랙', icon: <ChatIcon />, path: '/slack', notificationEndpoint: '/slack/notifications/count' },
-  { id: 'discord', text: '디스코드', icon: <HeadsetIcon />, path: '/discord', notificationEndpoint: '/discord/notifications/count' },
-  { id: 'figma', text: '피그마', icon: <FigmaIcon />, path: '/figma' }
+// 사이드바 메뉴 항목 데이터
+const menuItemsData = [
+  { 
+    id: 'dashboard',
+    text: '대시보드', 
+    path: '/', 
+    icon: <DashboardIcon />
+  },
+  {
+    id: 'gmail',
+    text: 'Gmail',
+    path: '/gmail',
+    icon: <GmailIcon />,
+    notificationEndpoint: '/api/gmail/notifications/count'
+  },
+  {
+    id: 'github',
+    text: 'GitHub',
+    path: '/github',
+    icon: <GitHubIcon />,
+    notificationEndpoint: '/api/github/notifications/count'
+  },
+  {
+    id: 'notion',
+    text: '노션',
+    path: '/notion',
+    icon: <NotionIcon />,
+    notificationEndpoint: '/api/notion/notifications/count'
+  },
+  {
+    id: 'figma',
+    text: '피그마',
+    path: '/figma',
+    icon: <FigmaIcon />
+  },
+  {
+    id: 'drive',
+    text: '드라이브',
+    path: '/drive',
+    icon: <FolderIcon />
+  },
+  {
+    id: 'sheets',
+    text: '시트',
+    path: '/sheets',
+    icon: <TableChartIcon />
+  },
+  {
+    id: 'slack',
+    text: '슬랙',
+    path: '/slack',
+    icon: <ChatIcon />,
+    notificationEndpoint: '/api/slack/notifications/count'
+  },
+  {
+    id: 'discord',
+    text: '디스코드',
+    path: '/discord',
+    icon: <HeadsetIcon />,
+    notificationEndpoint: '/api/discord/notifications/count'
+  }
+];
+
+// 사용자 메뉴 항목 데이터
+const userMenuItems = [
+  {
+    title: '설정',
+    path: '/settings',
+    icon: <SettingsIcon />
+  },
+  {
+    title: '클라이언트 설정',
+    path: '/client-settings',
+    icon: <ColorLensIcon />
+  },
+  {
+    title: '로그아웃',
+    path: '/logout',
+    icon: <LogoutIcon />
+  }
 ];
 
 // 공통 레이아웃 컴포넌트
@@ -68,7 +138,7 @@ const Layout = ({ children }) => {
   const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [menuItems, setMenuItems] = useState(menuItemsConfig);
+  const [menuItems, setMenuItems] = useState(menuItemsData);
   const [totalNotifications, setTotalNotifications] = useState(0);
   const [loading, setLoading] = useState(false);
 
@@ -104,7 +174,7 @@ const Layout = ({ children }) => {
     const fetchNotificationCounts = async () => {
       try {
         // 알림 엔드포인트가 있는 메뉴 항목만 필터링
-        const itemsWithNotifications = menuItemsConfig.filter(item => item.notificationEndpoint);
+        const itemsWithNotifications = menuItems.filter(item => item.notificationEndpoint);
         
         // 각 서비스별 알림 카운트 요청 (병렬 처리)
         const notificationPromises = itemsWithNotifications.map(async (item) => {
@@ -140,7 +210,7 @@ const Layout = ({ children }) => {
         const notificationResults = await Promise.all(notificationPromises);
         
         // 알림 카운트를 메뉴 항목에 적용
-        const updatedMenuItems = menuItemsConfig.map(item => {
+        const updatedMenuItems = menuItems.map(item => {
           const notification = notificationResults.find(n => n.id === item.id);
           return {
             ...item,
@@ -330,6 +400,20 @@ const Layout = ({ children }) => {
             <ListItemText primary="설정" />
           </ListItemButton>
         </ListItem>
+        <ListItem disablePadding sx={{ mb: 0.5 }}>
+          <ListItemButton
+            onClick={() => navigate('/client-settings')}
+            sx={{
+              borderRadius: `${theme.shape.borderRadius}px`,
+              py: 1.2,
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 38, color: theme.palette.text.secondary }}>
+              <ColorLensIcon />
+            </ListItemIcon>
+            <ListItemText primary="클라이언트 설정" />
+          </ListItemButton>
+        </ListItem>
         <ListItem disablePadding>
           <ListItemButton
             sx={{
@@ -377,6 +461,12 @@ const Layout = ({ children }) => {
           <SettingsIcon fontSize="small" />
         </ListItemIcon>
         설정
+      </MenuItem>
+      <MenuItem onClick={() => { handleMenuClose(); navigate('/client-settings'); }}>
+        <ListItemIcon>
+          <ColorLensIcon fontSize="small" />
+        </ListItemIcon>
+        클라이언트 설정
       </MenuItem>
       <MenuItem onClick={handleLogout}>
         <ListItemIcon>

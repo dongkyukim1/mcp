@@ -15,6 +15,7 @@ import Sheets from './pages/Sheets';
 import Slack from './pages/Slack';
 import Discord from './pages/Discord';
 import Settings from './pages/Settings';
+import ClientSettings from './pages/ClientSettings';
 import NotFound from './pages/NotFound';
 import SettingsProvider from './contexts/SettingsContext';
 
@@ -217,6 +218,7 @@ const App = () => {
               <Route path="/slack" element={<Slack />} />
               <Route path="/discord" element={<Discord />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/client-settings" element={<ClientSettings />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>
